@@ -209,25 +209,25 @@ let parse_real_payload_len payload_len stream =
   match payload_len with
     | 126 ->
       bitstring_of_bytes stream 2 >>= fun bits ->
-      (bitmatch bits with
-	| {len2 : 16 : bigendian} -> return @@ big_int_of_int len2
-	| { _ } -> return zero_big_int)
+      (match%bitstring bits with
+        | {| len2 : 16 : bigendian |} -> return @@ big_int_of_int len2
+        | {| _ |} -> return zero_big_int)
 
     | 127 ->
       bitstring_of_bytes stream 8 >>= fun bits ->
-      (bitmatch bits with
-	| {len8 : 64 : bigendian} -> return @@ big_int_of_int64 len8
-	| { _ } -> return zero_big_int)
+      (match%bitstring bits with
+      | {| len8 : 64 : bigendian |} -> return @@ big_int_of_int64 len8
+      | {|  _ |} -> return zero_big_int)
     | _ -> return @@ big_int_of_int payload_len
 ;;
 
 let parse_payload_mask stream =
   bitstring_of_bytes stream 4 >>= fun bits ->
-  bitmatch bits with
-    | { mask4 : 32 : string } ->
+  match%bitstring bits with
+    | {| mask4 : 32 : string |} ->
       return (ExtString.String.explode mask4 +> List.map int_of_char +> Array.of_list)
 
-    | { _ } ->  return [||]
+    | {| _ |} ->  return [||]
 ;;
 
 let parse_payload_text ?(payload_mask=[||]) real_len stream =
@@ -248,15 +248,15 @@ let parse_payload_text ?(payload_mask=[||]) real_len stream =
 
 let parse_status_code stream =
   bitstring_of_bytes stream 2 >>= fun bits ->
-  bitmatch bits with
-    | {status_code : 16 : bigendian} -> return status_code
-    | { _ } -> return 0
+  match%bitstring bits with
+    | {|status_code : 16 : bigendian|} -> return status_code
+    | {| _ |} -> return 0
 ;;
 
 let unpack stream =
   bitstring_of_bytes stream 2 >>= fun bits ->
-  bitmatch bits with
-    | { fin : 1; rsv1 : 1; rsv2 : 1; rsv3 : 1; opcode_int : 4; is_mask : 1; payload_len : 7 } ->
+  match%bitstring bits with
+    | {| fin : 1; rsv1 : 1; rsv2 : 1; rsv3 : 1; opcode_int : 4; is_mask : 1; payload_len : 7 |} ->
       let opcode = opcode_of_int opcode_int in
       parse_real_payload_len payload_len stream >>= fun real_payload_len ->
       (if is_mask then
@@ -297,6 +297,6 @@ let unpack stream =
 	  let emsg = spf "undefined opcode %d" opcode_int in
 	  return @@ UndefinedFrame(emsg))
 
-    | { _ } -> return @@ UndefinedFrame("invalid header")
+    | {| _ |} -> return @@ UndefinedFrame("invalid header")
 ;;
 

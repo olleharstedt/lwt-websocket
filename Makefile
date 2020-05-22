@@ -1,7 +1,8 @@
 PACKNAME:=Lwt_websocket
 MODNAME:=lwt_websocket
 LIBNAME:=lwt-websocket
-PKGS:=unix threads num extlib cryptokit bitstring bitstring.syntax lwt.unix lwt.syntax
+#PKGS:=unix threads num extlib cryptokit bitstring bitstring.syntax lwt.unix lwt.syntax
+PKGS:=unix threads num extlib cryptokit bitstring bitstring.ppx lwt lwt.unix
 CAMLC:=ocamlfind ocamlc -g -thread
 OPT:=ocamlfind ocamlopt -g -thread
 #LWT_DEBUG:=-ppopt -lwt-debug
@@ -39,13 +40,13 @@ $(LIBNAME).cmxa:$(MODNAME).cmx
 	$(OPT) -a -o $@ $<
 
 %.cmi:%.mli
-	$(CAMLC) -syntax camlp4o -package "$(PKGS)" -for-pack $(PACKNAME) -c $<
+	$(CAMLC) -package "$(PKGS)" -for-pack $(PACKNAME) -c $<
 
 %.cmo:%.ml
-	$(CAMLC) -syntax camlp4o -package "$(PKGS)" -for-pack $(PACKNAME) -c $<
+	$(CAMLC) -package "$(PKGS)" -for-pack $(PACKNAME) -c $<
 
 %.cmx:%.ml
-	$(OPT) -syntax camlp4o $(LWT_DEBUG) -package "$(PKGS)" -for-pack $(PACKNAME) -c $<
+	$(OPT) $(LWT_DEBUG) -package "$(PKGS)" -for-pack $(PACKNAME) -c $<
 
 META:Makefile
 	echo "description = \"lwt websocket\"" > $@

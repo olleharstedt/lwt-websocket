@@ -53,11 +53,11 @@ let accept sock_listen =
   Lwt_unix.set_close_on_exec sock;
   Lwt_unix.setsockopt sock Unix.SO_REUSEADDR true;
 
-  let inchan = Lwt_chan.in_channel_of_descr sock in
-  let outchan = Lwt_chan.out_channel_of_descr sock in
+  let inchan = Lwt_io.of_fd ~mode:Input sock in
+  let outchan = Lwt_io.of_fd ~mode:Output sock in
   let stream = Lwt_io.read_chars inchan in
-  let send str = Lwt_chan.output_string outchan str >>= fun () ->
-    Lwt_chan.flush outchan in
+  let send str = Lwt_io.write outchan str >>= fun () ->
+    Lwt_io.flush outchan in
 
   (** first, read client http request *)
   HttpRequest.parse stream >>= fun request ->
@@ -91,11 +91,11 @@ let connect ?(sec_socket_key="none") ~host ~port =
   let sockaddr = ADDR_INET(inet_addr, port) in
   Lwt_unix.connect sock sockaddr >>= fun () ->
 
-  let inchan = Lwt_chan.in_channel_of_descr sock in
-  let outchan = Lwt_chan.out_channel_of_descr sock in
+  let inchan = Lwt_io.of_fd ~mode:Input sock in
+  let outchan = Lwt_io.of_fd ~mode:Output sock in
   let stream = Lwt_io.read_chars inchan in
-  let send str = Lwt_chan.output_string outchan str >>= fun () ->
-    Lwt_chan.flush outchan in
+  let send str = Lwt_io.write outchan str >>= fun () ->
+    Lwt_io.flush outchan in
 
   (** first, send websocket request with sec_socket_key *)
   send @@ spf "GET http://%s:%d HTTP/1.0\r\n" host port >>= fun () ->
